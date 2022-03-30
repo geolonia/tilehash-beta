@@ -1,0 +1,8 @@
+{
+  "dependencies": {},
+  "name": "tilehash",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "Keitaroh Kobayashi <keita@kbys.me>",
+  "license": "MIT"
+}
