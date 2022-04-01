@@ -36,11 +36,11 @@ function tileToTilehash(tile) {
 }
 
 function tilehashToTile(th) {
-  const int = BigInt(parseInt(th, 16));
+  const int = BigInt(`0o` + th);
   let bitLen = BigInt(th.length * 4);
   let scratchInt = int;
   // [x,y,z][4]
-  let children = [ [ 0, 0, 1 ], [ 0, 1, 1 ], [ 1, 0, 1 ], [ 1, 1, 1 ] ];
+  let children = getChildren([0,0,0]);
   let lastChild;
   for (let i = bitLen - 2n; i >= 0n; i -= 2n) {
     const posInChildren = scratchInt >> i;
