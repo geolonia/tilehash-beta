@@ -20,9 +20,7 @@ export function getChildren(tile: ZFXYTile): ZFXYTile[] {
 
 export function generate(tile: ZFXYTile): string {
   let [f,x,y,z] = tile;
-  // console.log('starting with ', tile)
-  let out = BigInt(0);
-  const maxZ = z;
+  let out = '';
   while (z>0) {
     const thisTile: ZFXYTile = [f,x,y,z];
     const parent = getParent(thisTile);
@@ -30,28 +28,21 @@ export function generate(tile: ZFXYTile): string {
     const positionInParent = childrenOfParent.findIndex(
       ([xf, xx, xy, xz]) => xf === f && xx === x && xy === y && xz === z
     );
-    // console.log('parent', parent);
-    // console.log('pos in parent', positionInParent);
-    out += (BigInt(positionInParent) << BigInt(3) * BigInt(maxZ - z));
+    out = positionInParent.toString(8) + out;
     f = parent[0];
     x = parent[1];
     y = parent[2];
     z = parent[3];
   }
-  return out.toString(8);
+  return out;
 }
 
 export function parse(th: string): ZFXYTile {
-  const int = BigInt(`0o` + th);
-  let bitLen = BigInt(th.length * 3);
-  let scratchInt = int;
   let children = getChildren([0,0,0,0]);
-  let lastChild;
-  for (let i = bitLen - BigInt(3); i >= BigInt(0); i -= BigInt(3)) {
-    const posInChildren = scratchInt >> i;
-    lastChild = children[Number(posInChildren)];
+  let lastChild: ZFXYTile;
+  for (const c of th) {
+    lastChild = children[parseInt(c, 8)];
     children = getChildren(lastChild);
-    scratchInt = scratchInt & ((BigInt(2)**i)-BigInt(1));
   }
   return lastChild;
 }
