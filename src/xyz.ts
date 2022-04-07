@@ -48,3 +48,14 @@ export function parse(th: string): XYZTile {
   }
   return lastChild;
 }
+
+export function toURL(input: XYZTile | string): string {
+  let tile: XYZTile;
+  if (typeof input === 'string') {
+    tile = parse(input);
+  } else {
+    tile = input;
+  }
+  const [x,y,z] = tile;
+  return `${z}/${x}/${y}`;
+}

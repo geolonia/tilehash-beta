@@ -55,3 +55,14 @@ export function parse(th: string): ZFXYTile {
   }
   return lastChild;
 }
+
+export function toURL(input: ZFXYTile | string): string {
+  let tile: ZFXYTile;
+  if (typeof input === 'string') {
+    tile = parse(input);
+  } else {
+    tile = input;
+  }
+  const [f,x,y,z] = tile;
+  return `${z}/${f}/${x}/${y}`;
+}
