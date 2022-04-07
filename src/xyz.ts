@@ -1,8 +1,10 @@
-function getParent(tile) {
+export type XYZTile = [number, number, number];
+
+export function getParent(tile: XYZTile): XYZTile {
   const [x,y,z] = tile;
   return [x>>1,y>>1,z-1];
 }
-function getChildren(tile) {
+export function getChildren(tile: XYZTile): XYZTile[] {
   const [x,y,z] = tile;
   return [
     [x * 2,     y * 2,     z+1], // +0, +0
@@ -12,22 +14,19 @@ function getChildren(tile) {
   ];
 }
 
-function tileToTilehash(tile) {
+export function generate(tile: XYZTile): string {
   let [x,y,z] = tile;
   if (z % 2 !== 0) {
     throw new Error('z must be divisible by 2')
   }
-  // console.log('starting with ', tile)
   let out = BigInt(0);
   const maxZ = z;
   while (z>0) {
-    const thisTile = [x,y,z];
+    const thisTile: XYZTile = [x,y,z];
     const parent = getParent(thisTile);
     const childrenOfParent = getChildren(parent);
     const positionInParent = childrenOfParent.findIndex(([xx, xy, xz]) => xx === x && xy === y && xz === z);
-    // console.log('parent', parent);
-    // console.log('pos in parent', positionInParent);
-    out += (BigInt(positionInParent) << 2n * BigInt(maxZ - z));
+    out += (BigInt(positionInParent) << BigInt(2) * BigInt(maxZ - z));
     x = parent[0];
     y = parent[1];
     z = parent[2];
@@ -35,25 +34,17 @@ function tileToTilehash(tile) {
   return out.toString(16);
 }
 
-function tilehashToTile(th) {
+export function parse(th: string): XYZTile {
   const int = BigInt(`0o` + th);
   let bitLen = BigInt(th.length * 4);
   let scratchInt = int;
-  // [x,y,z][4]
   let children = getChildren([0,0,0]);
   let lastChild;
-  for (let i = bitLen - 2n; i >= 0n; i -= 2n) {
+  for (let i = bitLen - BigInt(2); i >= BigInt(0); i -= BigInt(2)) {
     const posInChildren = scratchInt >> i;
-    // console.log(i, posInChildren);
-    lastChild = children[posInChildren];
+    lastChild = children[Number(posInChildren)];
     children = getChildren(lastChild);
-    scratchInt = scratchInt & ((2n**i)-1n);
-    // console.log(scratchInt, lastChild);
+    scratchInt = scratchInt & ((BigInt(2)**i)-BigInt(1));
   }
   return lastChild;
-}
-
-module.exports = {
-  tileToTilehash,
-  tilehashToTile,
 }
