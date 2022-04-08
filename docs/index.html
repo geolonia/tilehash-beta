@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Tilehash Demo</title>
+    <style>
+      html, body {
+        height: 100vh;
+        width: 100vw;
+        padding: 0;
+        margin: 0;
+        position: relative;
+      }
+      #map {
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 75vh;
+      }
+      #controls {
+        position: absolute;
+        bottom: 0; left: 0; right: 0;
+        height: 25vh;
+        display: flex;
+        justify-content: center;
+      }
+      #controls > div {
+        margin: 0 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="map"
+      data-gesture-handling="off"
+      data-lat="35.68602802096083"
+      data-lng="139.75487188330095"
+      data-zoom="20"
+      data-pitch="60"
+      data-marker="off"
+    ></div>
+    <div id="controls">
+      <!-- <div>
+        <h2>Display tilehash on map</h2>
+        <div>Enter Tilehash (ZFXY): <form id="tilehashOnMap"><input type="text" id="thOnMapTh"></form></div>
+      </div> -->
+      <div>
+        <h2>Get tilehash from map</h2>
+        <div>Clicked coordinates: <code id="clickedLatlng"></code></div>
+        <div>Enter Height (meters): <input type="number" value="0" min="0" max="33554432" id="genTilehashMeters"></div>
+        <div>Generated tilehash (z=25): <code id="generatedTilehash25"></code></div>
+        <div>Generated tilehash (z=current): <code id="generatedTilehashCur"></code></div>
+      </div>
+    </div>
+    <script type="text/javascript" src="https://cdn.geolonia.com/v1/embed?geolonia-api-key=YOUR-API-KEY"></script>
+    <script type="module">
+      import tilebelt from "./tilebelt.js";
+      import { zfxy } from "./index.es.js";
+
+      const map = new geolonia.Map('#map');
+      window._mainMap = map;
+
+      const clickedLatLng = document.getElementById('clickedLatlng'),
+            genTilehashMeters = document.getElementById('genTilehashMeters'),
+            generatedTilehash25 = document.getElementById('generatedTilehash25'),
+            generatedTilehashCur = document.getElementById('generatedTilehashCur');
+
+      map.on('load', function() {
+        map.addSource('th', {
+          type: "geojson",
+          data: { type: "FeatureCollection", features: [] },
+        });
+        map.addLayer({
+          id: 'th-z25',
+          type: 'fill-extrusion',
+          source: 'th',
+          filter: ['==', ['get', 'type'], 'z25'],
+          paint: {
+            'fill-extrusion-color': '#000',
+            'fill-extrusion-height': ['get', 'height'],
+            'fill-extrusion-base': ['get', 'base'],
+            'fill-extrusion-opacity': 1.0,
+          }
+        });
+        map.addLayer({
+          id: 'th-curz',
+          type: 'fill-extrusion',
+          source: 'th',
+          filter: ['==', ['get', 'type'], 'curz'],
+          paint: {
+            'fill-extrusion-color': '#f00',
+            'fill-extrusion-height': ['get', 'height'],
+            'fill-extrusion-base': ['get', 'base'],
+            'fill-extrusion-opacity': 0.4,
+          }
+        });
+      });
+
+      function f2height(z, f) {
+        return parseFloat(f) * 2**25 / 2**z;
+      }
+
+      map.on('click', function(e) {
+        clickedLatLng.innerText = `lat=${e.lngLat.lat},lng=${e.lngLat.lng}`;
+        const meters = parseInt(genTilehashMeters.value, 10);
+        const curZ = Math.ceil(map.getZoom()) + 2;
+        const f25 = Math.floor(meters /* / (2 ** 25 / 2 ** 25) */);
+        const fCur = Math.floor(meters / (2 ** 25 / 2 ** curZ));
+        const xyz25 = tilebelt.pointToTile(e.lngLat.lng, e.lngLat.lat, 25);
+        const xyzCur = tilebelt.pointToTile(e.lngLat.lng, e.lngLat.lat, curZ);
+
+        const th25 = zfxy.generate([f25, ...xyz25]);
+        const thCur = zfxy.generate([fCur, ...xyzCur]);
+        generatedTilehash25.innerText = th25;
+        generatedTilehashCur.innerText = thCur;
+
+        map.getSource('th').setData({ type: "FeatureCollection", features: [
+          {
+            id: 'curz',
+            type: "Feature",
+            geometry: tilebelt.tileToGeoJSON(xyzCur),
+            properties: {
+              height: f2height(curZ, fCur + 1),
+              base: f2height(curZ, fCur),
+              type: 'curz'
+            },
+          },
+          {
+            id: 'z25',
+            type: "Feature",
+            geometry: tilebelt.tileToGeoJSON(xyz25),
+            properties: {
+              height: f25 + 1,
+              base: f25,
+              type: 'z25',
+            },
+          },
+        ]});
+      });
+    </script>
+  </body>
+</html>

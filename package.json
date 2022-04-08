@@ -9,7 +9,7 @@
     "dist/**/*"
   ],
   "scripts": {
-    "build": "rollup -c"
+    "build": "rollup -c && cp ./dist/index.es* ./docs/"
   },
   "author": "Keitaroh Kobayashi <keita@kbys.me>",
   "license": "MIT",
