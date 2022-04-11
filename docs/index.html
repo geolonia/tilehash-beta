@@ -56,6 +56,7 @@
 
       const map = new geolonia.Map('#map');
       window._mainMap = map;
+      window.zfxy = zfxy;
 
       const clickedLatLng = document.getElementById('clickedLatlng'),
             genTilehashMeters = document.getElementById('genTilehashMeters'),
@@ -94,20 +95,22 @@
       });
 
       function f2height(z, f) {
-        return parseFloat(f) * 2**25 / 2**z;
+        return parseFloat(f - 2**(z-1)) * 2**25 / 2**z;
       }
 
       map.on('click', function(e) {
         clickedLatLng.innerText = `lat=${e.lngLat.lat},lng=${e.lngLat.lng}`;
         const meters = parseInt(genTilehashMeters.value, 10);
         const curZ = Math.ceil(map.getZoom()) + 2;
-        const f25 = Math.floor(meters /* / (2 ** 25 / 2 ** 25) */);
-        const fCur = Math.floor(meters / (2 ** 25 / 2 ** curZ));
-        const xyz25 = tilebelt.pointToTile(e.lngLat.lng, e.lngLat.lat, 25);
-        const xyzCur = tilebelt.pointToTile(e.lngLat.lng, e.lngLat.lat, curZ);
 
-        const th25 = zfxy.generate([f25, ...xyz25]);
-        const thCur = zfxy.generate([fCur, ...xyzCur]);
+        const zfxy25 = zfxy.calculateZFXY({lat: e.lngLat.lat, lng: e.lngLat.lng, elevation: meters, zoom: 25});
+        const zfxyCur = zfxy.calculateZFXY({lat: e.lngLat.lat, lng: e.lngLat.lng, elevation: meters, zoom: curZ});
+        const th25 = zfxy.generate(zfxy25);
+        const thCur = zfxy.generate(zfxyCur);
+
+        const xyz25 = [zfxy25[1], zfxy25[2], zfxy25[3]];
+        const xyzCur = [zfxyCur[1], zfxyCur[2], zfxyCur[3]];
+
         generatedTilehash25.innerText = th25;
         generatedTilehashCur.innerText = thCur;
 
@@ -117,8 +120,8 @@
             type: "Feature",
             geometry: tilebelt.tileToGeoJSON(xyzCur),
             properties: {
-              height: f2height(curZ, fCur + 1),
-              base: f2height(curZ, fCur),
+              height: f2height(curZ, zfxyCur[0] + 1),
+              base: f2height(curZ, zfxyCur[0]),
               type: 'curz'
             },
           },
@@ -127,8 +130,8 @@
             type: "Feature",
             geometry: tilebelt.tileToGeoJSON(xyz25),
             properties: {
-              height: f25 + 1,
-              base: f25,
+              height: zfxy25[0] + 1,
+              base: zfxy25[0],
               type: 'z25',
             },
           },

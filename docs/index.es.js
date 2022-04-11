@@ -51,6 +51,29 @@ function toURL$1(input) {
     const [f, x, y, z] = tile;
     return `${z}/${f}/${x}/${y}`;
 }
+function calculateZFXY(input) {
+    const meters = typeof input.elevation !== 'undefined' ? input.elevation : 0;
+    if (meters <= -(2 ** 24) || meters >= (2 ** 24)) {
+        throw new Error(`ZFXY only supports elevation between -2^24 and +2^24.`);
+    }
+    const f = Math.floor(((2 ** input.zoom) * meters) / (2 ** 25)) + (2 ** (input.zoom - 1));
+    // Algorithm adapted from tilebelt.js
+    const d2r = Math.PI / 180;
+    const sin = Math.sin(input.lat * d2r);
+    const z2 = 2 ** input.zoom;
+    let x = z2 * (input.lng / 360 + 0.5);
+    const y = z2 * (0.5 - 0.25 * Math.log((1 + sin) / (1 - sin)) / Math.PI);
+    // Wrap Tile X
+    x = x % z2;
+    if (x < 0)
+        x = x + z2;
+    return [
+        f,
+        Math.floor(x),
+        Math.floor(y),
+        input.zoom,
+    ];
+}
 
 var zfxyFuncs = /*#__PURE__*/Object.freeze({
   __proto__: null,
@@ -58,7 +81,8 @@ var zfxyFuncs = /*#__PURE__*/Object.freeze({
   getChildren: getChildren$1,
   generate: generate$1,
   parse: parse$1,
-  toURL: toURL$1
+  toURL: toURL$1,
+  calculateZFXY: calculateZFXY
 });
 
 function getParent(tile) {
