@@ -44,7 +44,7 @@
       <div>
         <h2>Get tilehash from map</h2>
         <div>Clicked coordinates: <code id="clickedLatlng"></code></div>
-        <div>Enter Height (meters): <input type="number" value="0" min="0" max="33554432" id="genTilehashMeters"></div>
+        <div>Enter Height (meters): <input type="number" value="0" min="-16777216" max="16777216" id="genTilehashMeters"></div>
         <div>Generated tilehash (z=25): <code id="generatedTilehash25"></code></div>
         <div>Generated tilehash (z=current): <code id="generatedTilehashCur"></code></div>
       </div>
@@ -130,8 +130,8 @@
             type: "Feature",
             geometry: tilebelt.tileToGeoJSON(xyz25),
             properties: {
-              height: zfxy25[0] + 1,
-              base: zfxy25[0],
+              height: f2height(25, zfxy25[0] + 1),
+              base: f2height(25, zfxy25[0]),
               type: 'z25',
             },
           },
