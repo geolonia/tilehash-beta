@@ -44,7 +44,7 @@
       <div>
         <h2>Get tilehash from map</h2>
         <div>Clicked coordinates: <code id="clickedLatlng"></code></div>
-        <div>Enter Height (meters): <input type="number" value="0" min="-16777216" max="16777216" id="genTilehashMeters"></div>
+        <div>Enter Height (meters): <input type="number" value="0" min="-33554432" max="33554432" id="genTilehashMeters"></div>
         <div>Generated tilehash (z=25): <code id="generatedTilehash25"></code></div>
         <div>Generated tilehash (z=current): <code id="generatedTilehashCur"></code></div>
       </div>
@@ -95,7 +95,7 @@
       });
 
       function f2height(z, f) {
-        return parseFloat(f - 2**(z-1)) * 2**25 / 2**z;
+        return f * (2**zfxy.ZFXY_1M_ZOOM_BASE) / (2**z);
       }
 
       map.on('click', function(e) {
@@ -111,8 +111,8 @@
         const xyz25 = [zfxy25[1], zfxy25[2], zfxy25[3]];
         const xyzCur = [zfxyCur[1], zfxyCur[2], zfxyCur[3]];
 
-        generatedTilehash25.innerText = th25;
-        generatedTilehashCur.innerText = thCur;
+        generatedTilehash25.innerText = `${th25} (${zfxy.toURL(zfxy25)})`;
+        generatedTilehashCur.innerText = `${thCur} (${zfxy.toURL(zfxyCur)})`;
 
         map.getSource('th').setData({ type: "FeatureCollection", features: [
           {
